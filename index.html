@@ -147,6 +147,7 @@
             <div class="feature">
                 <button onclick="showImageRecognition()" aria-label="Image Recognition">Image Recognition</button>
                 <button onclick="showTextRecognition()" aria-label="Text Recognition">Text Recognition</button>
+                <button onclick="locateUser()" aria-label="Locate Me">Locate Me</button> <!-- Locate Me Button -->
             </div>
 
             <!-- Image Recognition Section -->
@@ -169,10 +170,14 @@
                 <div class="feature">
                     <input type="file" id="textImageUpload" accept="image/*" aria-label="Upload an image with text">
                     <button onclick="extractTextFromImage()" aria-label="Extract Text">Extract Text</button>
-                    <button onclick="stopAudio()" aria-label="Stop Audio">Stop Audio</button>
                     <p class="instructions">Upload an image with visible text for extraction.</p>
                 </div>
                 <p id="textResponse"></p>
+            </div>
+
+            <!-- Location Section -->
+            <div class="feature">
+                <p id="locationResponse"></p> <!-- Location Response Display -->
             </div>
         </section>
 
@@ -252,50 +257,49 @@
                     ]
                 };
 
-                const apiKey = "AIzaSyDqdgibUUSZEr22Nr01P4oZKYI9znHrGhM"; // Your API Key here
+                const apiKey = "YOUR_GOOGLE_CLOUD_VISION_API_KEY";  // Replace with your API key
                 const apiUrl = https://vision.googleapis.com/v1/images:annotate?key=${apiKey};
 
-                responseElement.textContent = "Processing image...";
-                speakText("Processing image...");
-
                 try {
-                    const response = await fetch(apiUrl, {
+                    const res = await fetch(apiUrl, {
                         method: "POST",
-                        headers: {
-                            "Content-Type": "application/json"
-                        },
+                        headers: { "Content-Type": "application/json" },
                         body: JSON.stringify(requestBody)
                     });
 
-                    if (!response.ok) {
-                        throw new Error("Failed to analyze image.");
-                    }
+                    const data = await res.json();
 
-                    const data = await response.json();
-                    if (data.responses[0].labelAnnotations && data.responses[0].labelAnnotations.length > 0) {
-                        const labels = data.responses[0].labelAnnotations.map(label => label.description).join(', ');
-                        responseElement.textContent = Image contains: ${labels};
-                        speakText(The image contains: ${labels});
+                    if (data.responses[0].labelAnnotations) {
+                        const labels = data.responses[0].labelAnnotations.map(item => item.description);
+                        responseElement.textContent = This image contains: ${labels.join(", ")};
+                        speakText(This image contains: ${labels.join(", ")});
                     } else {
-                        throw new Error("No recognizable objects found.");
+                        responseElement.textContent = "Could not analyze the image.";
+                        speakText("Could not analyze the image.");
                     }
                 } catch (error) {
-                    responseElement.textContent = error.message;
-                    speakText(error.message);
+                    responseElement.textContent = "Error analyzing image.";
+                    speakText("Error analyzing image.");
                 }
             };
 
             reader.readAsDataURL(file);
         }
 
-        // Extract Text from Image for Blind Users
+        // Stop Audio (optional)
+        function stopAudio() {
+            const synth = window.speechSynthesis;
+            synth.cancel();  // Stops current speech
+        }
+
+        // Extract Text from Image using Tesseract.js (Text Recognition)
         async function extractTextFromImage() {
             const fileInput = document.getElementById("textImageUpload");
-            const responseElement = document.getElementById("textResponse");
+            const textResponseElement = document.getElementById("textResponse");
 
             if (fileInput.files.length === 0) {
-                responseElement.textContent = "Please upload an image with text.";
-                speakText("Please upload an image with text.");
+                textResponseElement.textContent = "Please upload an image.";
+                speakText("Please upload an image.");
                 return;
             }
 
@@ -303,105 +307,108 @@
             const reader = new FileReader();
 
             reader.onload = async function () {
-                const base64Image = reader.result.split(",")[1];
+                const img = new Image();
+                img.src = reader.result;
 
-                const requestBody = {
-                    requests: [
-                        {
-                            image: { content: base64Image },
-                            features: [{ type: "TEXT_DETECTION", maxResults: 10 }]
-                        }
-                    ]
-                };
-
-                const apiKey = "AIzaSyDqdgibUUSZEr22Nr01P4oZKYI9znHrGhM"; // Your API Key here
-                const apiUrl = https://vision.googleapis.com/v1/images:annotate?key=${apiKey};
-
-                responseElement.textContent = "Processing image...";
-                speakText("Processing image...");
-
-                try {
-                    const response = await fetch(apiUrl, {
-                        method: "POST",
-                        headers: {
-                            "Content-Type": "application/json"
-                        },
-                        body: JSON.stringify(requestBody)
+                img.onload = async function () {
+                    Tesseract.recognize(img, 'eng', {
+                        logger: (m) => console.log(m)
+                    }).then(({ data: { text } }) => {
+                        textResponseElement.textContent = Extracted Text: ${text};
+                        speakText(Extracted Text: ${text});
                     });
-
-                    if (!response.ok) {
-                        throw new Error("Failed to fetch text detection.");
-                    }
-
-                    const data = await response.json();
-                    if (data.responses[0].textAnnotations && data.responses[0].textAnnotations.length > 0) {
-                        const extractedText = data.responses[0].textAnnotations[0].description;
-                        responseElement.textContent = Extracted Text: ${extractedText};
-                        speakText(Extracted Text: ${extractedText});
-                    } else {
-                        throw new Error("No text detected in the image.");
-                    }
-                } catch (error) {
-                    responseElement.textContent = error.message;
-                    speakText(error.message);
-                }
+                };
             };
 
             reader.readAsDataURL(file);
         }
 
-        // Stop Audio for Blind Users
-        function stopAudio() {
-            window.speechSynthesis.cancel();
-        }
-
-        // Start Speech-to-Text for Deaf Users
-        function startSpeechToText() {
-            const outputElement = document.getElementById("speechOutput");
-            const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
-            recognition.lang = "en-US";
-            recognition.interimResults = false;
-            recognition.start();
-
-            recognition.onresult = (event) => {
-                outputElement.textContent = event.results[0][0].transcript;
-            };
-
-            recognition.onerror = (event) => {
-                outputElement.textContent = Speech recognition error: ${event.error};
-            };
-        }
-
-        // Text-to-Speech for Mute Users
+        // Function to convert text to speech for Mute Users
         function convertTextToSpeech() {
-            const text = document.getElementById("textInput").value.trim();
-            if (!text) {
-                alert("Please enter some text.");
-                return;
+            const textInput = document.getElementById('textInput').value;
+            if (textInput.trim()) {
+                speakText(textInput);
+            } else {
+                speakText("Please enter a message.");
             }
-
-            const synth = window.speechSynthesis;
-            const utterance = new SpeechSynthesisUtterance(text);
-            synth.speak(utterance);
         }
 
-        // Speak Text for Blind Users
+        // Function to start speech-to-text for Deaf Users
+        function startSpeechToText() {
+            const speechRecognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+            speechRecognition.lang = "en-US";
+            speechRecognition.start();
+
+            speechRecognition.onresult = (event) => {
+                const transcript = event.results[0][0].transcript;
+                document.getElementById("speechOutput").textContent = transcript;
+                speakText(transcript);
+            };
+
+            speechRecognition.onerror = (event) => {
+                document.getElementById("speechOutput").textContent = "Speech recognition error.";
+                speakText("Speech recognition error.");
+            };
+        }
+
+        // Function to speak text (Text-to-Speech)
         function speakText(text) {
             const synth = window.speechSynthesis;
             const utterance = new SpeechSynthesisUtterance(text);
             synth.speak(utterance);
         }
+
+        // Function to locate user and speak location
+        async function locateUser() {
+            const locationElement = document.getElementById("locationResponse");
+
+            if (!navigator.geolocation) {
+                locationElement.textContent = "Geolocation is not supported by your browser.";
+                speakText("Geolocation is not supported by your browser.");
+                return;
+            }
+
+            navigator.geolocation.getCurrentPosition(async (position) => {
+                const latitude = position.coords.latitude;
+                const longitude = position.coords.longitude;
+                locationElement.textContent = Latitude: ${latitude}, Longitude: ${longitude};
+                speakText(Your current location is latitude ${latitude} and longitude ${longitude});
+                
+                const address = await getAddressFromCoordinates(latitude, longitude);
+                if (address) {
+                    locationElement.textContent += ` - Address: ${address}`;
+                    speakText(Your location is ${address});
+                } else {
+                    locationElement.textContent += " - Unable to retrieve address.";
+                    speakText("Unable to retrieve address.");
+                }
+            }, (error) => {
+                locationElement.textContent = Error getting location: ${error.message};
+                speakText(Error getting location: ${error.message});
+            });
+        }
+
+        // Function to get address from coordinates using Google Geocoding API
+        async function getAddressFromCoordinates(latitude, longitude) {
+            const apiKey = "YOUR_GOOGLE_API_KEY";  // Replace with your Google API Key
+            const apiUrl = https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${apiKey};
+
+            try {
+                const response = await fetch(apiUrl);
+                const data = await response.json();
+
+                if (data.status === "OK" && data.results.length > 0) {
+                    return data.results[0].formatted_address;
+                } else {
+                    return null;
+                }
+            } catch (error) {
+                console.error("Error fetching address:", error);
+                return null;
+            }
+        }
     </script>
 
-
-    <script src="https://www.gstatic.com/dialogflow-console/fast/messenger/bootstrap.js?v=1"></script>
-<df-messenger
-  chat-icon="https:&#x2F;&#x2F;image.similarpng.com&#x2F;very-thumbnail&#x2F;2021&#x2F;05&#x2F;Colorful-circle-logo-design-illustration-on-transparent-background-PNG.png"
-  chat-title="VitalAI"
-  agent-id="66defd9c-f98f-4d8d-999b-c167890813f2"
-  language-code="en"
-></df-messenger>
-</scipt>
 </body>
 
 </html>
