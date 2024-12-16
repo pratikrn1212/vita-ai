@@ -1,263 +1,71 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Inclusive AI App</title>
-    <style>
-        body {
-            font-family: 'Roboto', sans-serif;
-            margin: 0;
-            padding: 0;
-            background: #1a1a2e;
-            color: #e6e6e6;
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-        }
-
-        header {
-            background: linear-gradient(to right, #0f2027, #203a43, #2c5364);
-            color: #00d4ff;
-            padding: 40px 20px;
-            text-align: center;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-            text-transform: uppercase;
-            letter-spacing: 2px;
-        }
-
-        header h1 {
-            font-size: 2.5rem;
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: auto;
-            padding: 20px;
-            flex-grow: 1;
-        }
-
-        section {
-            margin: 30px 0;
-            padding: 20px;
-            background: #21253a;
-            border-radius: 10px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
-        }
-
-        section h2 {
-            color: #00ffab;
-            font-size: 2rem;
-            text-align: center;
-        }
-
-        .feature {
-            margin: 15px 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-
-        .feature input,
-        .feature button,
-        .feature textarea {
-            margin: 10px 0;
-            padding: 15px;
-            border-radius: 5px;
-            border: 1px solid #00d4ff;
-            background: #2d3448;
-            color: #e6e6e6;
-            width: 100%;
-            max-width: 500px;
-        }
-
-        button {
-            background-color: #00d4ff;
-            color: #1a1a2e;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            font-weight: bold;
-            font-size: 1.2rem;
-            padding: 15px;
-        }
-
-        button:hover {
-            background-color: #00ffab;
-            transform: scale(1.05);
-        }
-
-        .main-buttons {
-            display: flex;
-            justify-content: space-around;
-            margin: 50px 0;
-        }
-
-        .main-buttons button {
-            font-size: 1.5rem;
-            padding: 20px;
-            background-color: #00d4ff;
-            border: none;
-            width: 30%;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
-            transition: all 0.3s ease;
-        }
-
-        .main-buttons button:hover {
-            background-color: #00ffab;
-            transform: scale(1.1);
-        }
-
-        footer {
-            text-align: center;
-            padding: 15px;
-            background: #0f2027;
-            color: #00d4ff;
-            font-size: 0.9rem;
-        }
-
-        .instructions {
-            font-style: italic;
-            color: #888;
-            margin-top: 5px;
-        }
-
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Locate Me</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      margin: 20px;
+    }
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    #output {
+      margin-top: 20px;
+      font-size: 18px;
+      color: #333;
+    }
+  </style>
 </head>
-
 <body>
-    <header>
-        <h1>Vita AI</h1>
-        <p>Empowering Accessibility Through Technology</p>
-    </header>
+  <h1>Locate Me</h1>
+  <button onclick="getLocation()">Get My Location</button>
+  <div id="output">Press the button to find your location.</div>
 
-    <div class="container">
-        <!-- Main Buttons for Navigation -->
-        <div class="main-buttons">
-            <button onclick="navigateTo('blind')">For Blind Users</button>
-            <button onclick="navigateTo('mute')">For Mute Users</button>
-            <button onclick="navigateTo('deaf')">For Deaf Users</button>
-        </div>
+  <script>
+    function getLocation() {
+      const output = document.getElementById("output");
 
-        <!-- Blind Users Section -->
-        <section id="blind" style="display:none;">
-            <h2>For Blind Users</h2>
-            <p>Select a function to assist you.</p>
-            <div class="feature">
-                <button onclick="showImageRecognition()">Image Recognition</button>
-                <button onclick="showTextRecognition()">Text Recognition</button>
-                <button onclick="locateUser()">Locate Me</button> <!-- Locate Me Button -->
-            </div>
+      if (navigator.geolocation) {
+        output.innerHTML = "Finding your location...";
 
-            <!-- Image Recognition Section -->
-            <div id="imageRecognitionSection" style="display:none;">
-                <h3>Image Recognition</h3>
-                <p>Upload an image to hear its description.</p>
-                <div class="feature">
-                    <input type="file" id="imageUpload" accept="image/*">
-                    <button onclick="analyzeImage()">Analyze Image</button>
-                    <button onclick="stopAudio()">Stop Audio</button>
-                    <p class="instructions">Upload a clear image for the best results.</p>
-                </div>
-                <p id="imageResponse"></p>
-            </div>
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            const latitude = position.coords.latitude;
+            const longitude = position.coords.longitude;
+            const accuracy = position.coords.accuracy;
 
-            <!-- Text Recognition Section -->
-            <div id="textRecognitionSection" style="display:none;">
-                <h3>Text Recognition</h3>
-                <p>Extract text from an image.</p>
-                <div class="feature">
-                    <input type="file" id="textImageUpload" accept="image/*">
-                    <button onclick="extractTextFromImage()">Extract Text</button>
-                    <p class="instructions">Upload an image with visible text for extraction.</p>
-                </div>
-                <p id="textResponse"></p>
-            </div>
-
-            <!-- Location Section -->
-            <div class="feature">
-                <p id="locationResponse"></p> <!-- Location Response Display -->
-            </div>
-        </section>
-
-        <!-- Mute Users Section -->
-        <section id="mute" style="display:none;">
-            <h2>For Mute Users</h2>
-            <p>Type your message, and let the app speak it for you.</p>
-            <div class="feature">
-                <textarea id="textInput" placeholder="Type your message here..."></textarea>
-                <button onclick="convertTextToSpeech()">Speak Message</button>
-            </div>
-        </section>
-
-        <!-- Deaf Users Section -->
-        <section id="deaf" style="display:none;">
-            <h2>For Deaf Users</h2>
-            <p>Convert spoken language into text in real-time.</p>
-            <div class="feature">
-                <button onclick="startSpeechToText()">Start Speech-to-Text</button>
-                <p id="speechOutput"></p>
-            </div>
-        </section>
-    </div>
-
-    <footer>
-        <p>&copy; 2024 Vita AI. Designed for accessibility and innovation.</p>
-    </footer>
-
-    <script>
-        // Function to navigate to different sections
-        function navigateTo(section) {
-            // Hide all sections
-            document.getElementById('blind').style.display = 'none';
-            document.getElementById('mute').style.display = 'none';
-            document.getElementById('deaf').style.display = 'none';
-
-            // Show the selected section
-            document.getElementById(section).style.display = 'block';
-        }
-
-        // Show Image Recognition section
-        function showImageRecognition() {
-            document.getElementById('imageRecognitionSection').style.display = 'block';
-            document.getElementById('textRecognitionSection').style.display = 'none';
-        }
-
-        // Show Text Recognition section
-        function showTextRecognition() {
-            document.getElementById('textRecognitionSection').style.display = 'block';
-            document.getElementById('imageRecognitionSection').style.display = 'none';
-        }
-
-        // Analyze Image for Blind Users using Google Cloud Vision API
-        async function analyzeImage() {
-            const fileInput = document.getElementById("imageUpload");
-            const responseElement = document.getElementById("imageResponse");
-
-            if (fileInput.files.length === 0) {
-                responseElement.textContent = "Please upload an image.";
-                speakText("Please upload an image.");
-                return;
+            output.innerHTML = `
+              <p><strong>Latitude:</strong> ${latitude}</p>
+              <p><strong>Longitude:</strong> ${longitude}</p>
+              <p><strong>Accuracy:</strong> ${accuracy} meters</p>
+            `;
+          },
+          (error) => {
+            switch (error.code) {
+              case error.PERMISSION_DENIED:
+                output.innerHTML = "User denied the request for Geolocation.";
+                break;
+              case error.POSITION_UNAVAILABLE:
+                output.innerHTML = "Location information is unavailable.";
+                break;
+              case error.TIMEOUT:
+                output.innerHTML = "The request to get user location timed out.";
+                break;
+              default:
+                output.innerHTML = "An unknown error occurred.";
             }
-
-            const file = fileInput.files[0];
-            const reader = new FileReader();
-
-            reader.onload = async function () {
-                const base64Image = reader.result.split(",")[1];
-
-                const requestBody = {
-                    requests: [
-                        {
-                            image: { content: base64Image },
-                            features: [{ type: "LABEL_DETECTION", maxResults: 10 }]
-                        }
-                    ]
-                };
-
-                const apiKey = "YOUR_GOOGLE_CLOUD_VISION_API_KEY";  // Replace with your API key
-                const apiUrl = https://vision.googleapis.com/v1/images:annotate?key=${apiKey};
-
-                try {
-                    const res = await fetch(apiUrl, {
+          }
+        );
+      } else {
+        output.innerHTML = "Geolocation is not supported by this browser.";
+      }
+    }
+  </script>
+</body>
+</html>
