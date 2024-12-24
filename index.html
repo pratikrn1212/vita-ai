@@ -216,6 +216,7 @@
             <h2>For Deaf Users</h2>
             <p>Convert spoken language into text in real-time.</p>
             <div class="feature">
+                  <!-- languages ke liye -->
                 <label for="languageSelectDeaf">Choose Language:</label>
                 <select id="languageSelectDeaf">
                     <option value="en-US">English (US)</option>
@@ -230,7 +231,7 @@
             </div>
         </section>
     </div>
-
+  <!-- names and right-->
     <footer>
         <p>&copy; 2024 Vita AI. Designed for accessibility and innovation.</p>
         <p>Created with dedication by <strong>Pratik Rajendra Nagargoje</strong>, <strong>Kalyani Balaraju Pucha</strong>, and <strong>Atharva Dattatray Damale</strong>.</p>
@@ -313,7 +314,7 @@
                     ]
                 };
 
-                const apiKey = "AIzaSyDqdgibUUSZEr22Nr01P4oZKYI9znHrGhM"; // Your API Key here
+                const apiKey = "AIzaSyDqdgibUUSZEr22Nr01P4oZKYI9znHrGhM"; 
                 const apiUrl = `https://vision.googleapis.com/v1/images:annotate?key=${apiKey}`;
 
                 responseElement.textContent = "Processing image...";
@@ -375,7 +376,7 @@
                     ]
                 };
 
-                const apiKey = "AIzaSyDqdgibUUSZEr22Nr01P4oZKYI9znHrGhM"; // Your API Key here
+                const apiKey = "AIzaSyDqdgibUUSZEr22Nr01P4oZKYI9znHrGhM";
                 const apiUrl = `https://vision.googleapis.com/v1/images:annotate?key=${apiKey}`;
 
                 responseElement.textContent = "Processing image...";
@@ -438,7 +439,7 @@ function getRealTimeLocation() {
             const longitude = position.coords.longitude;
 
             // Use reverse geocoding to get address (using a geocoding API)
-            const apiKey = "AIzaSyACjqESP9U5B44JovhYbddcID2WhKEekHU"; // Replace with your geocoding API key
+            const apiKey = "AIzaSyACjqESP9U5B44JovhYbddcID2WhKEekHU"; 
             const apiUrl = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${apiKey}`;
 
             try {
@@ -505,8 +506,8 @@ function startSpeechToText() {
     if (!recognition) {
         recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
         recognition.lang = language;
-        recognition.interimResults = true; // To get intermediate results
-        recognition.continuous = true; // To keep it running continuously
+        recognition.interimResults = true; // To get fast results
+        recognition.continuous = true; // To keep this running continuously
 
         recognition.onresult = (event) => {
             const transcript = Array.from(event.results)
@@ -546,7 +547,7 @@ function stopSpeechToText() {
 
 
 
-
+  <!-- our chatbot  -->
 
         
 <script src="https://www.gstatic.com/dialogflow-console/fast/messenger/bootstrap.js?v=1"></script>
