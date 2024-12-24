@@ -1,4 +1,6 @@
 
+
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -136,9 +138,9 @@
     <div class="container">
         <!-- Main Buttons for Navigation -->
         <div class="main-buttons">
-            <button onclick="navigateTo('blind')">For Blind Users</button>
-            <button onclick="navigateTo('mute')">For Mute Users</button>
-            <button onclick="navigateTo('deaf')">For Deaf Users</button>
+            <button onclick="navigateTo('blind'), stopAudio()">For Blind Users</button>
+            <button onclick="navigateTo('mute'), stopAudio()">For Mute Users</button>
+            <button onclick="navigateTo('deaf'), stopAudio()">For Deaf Users</button>
         </div>
 
         <!-- Blind Users Section -->
@@ -148,20 +150,8 @@
             <div class="feature">
                 <button onclick="showImageRecognition()" aria-label="Image Recognition">Image Recognition</button>
                 <button onclick="showTextRecognition()" aria-label="Text Recognition">Text Recognition</button>
-                <button onclick="getRealTimeLocation()" aria-label="Get Real-Time Location">Get Real-Time Location</button>
+                <button onclick="getRealTimeLocation();hideOther()" aria-label="Get Real-Time Location">Get Real-Time Location</button>
                 <p id="locationResponse"></p>
-            </div>
-
-            <!-- Language Selection -->
-            <div class="feature">
-                <label for="languageSelectBlind">Choose Language:</label>
-                <select id="languageSelectBlind">
-                    <option value="en">English</option>
-                    <option value="es">Spanish</option>
-                    <option value="fr">French</option>
-                    <option value="de">German</option>
-                    <option value="hi">Hindi</option>
-                </select>
             </div>
 
             <!-- Image Recognition Section -->
@@ -206,7 +196,19 @@
                 </select>
                 <textarea id="textInput" placeholder="Type your message here..." aria-label="Message input"></textarea>
                 <button onclick="convertTextToSpeech()" aria-label="Speak message">Speak Message</button>
+                <button onclick="showMessages(), stopAudio()" aria-label="Quick Messages">Quick Messages</button>
             </div>
+            <section id="preset-messages" style="display:none;" >
+                <h2>Quick Messages</h2>
+                <button onclick="presetSpeak('Hello, how can I help you?')">Hello, how can I help you?</button>
+                <button onclick="presetSpeak('Good Morning!')">Excuse Me please</button><br><br>
+                <button onclick="presetSpeak('I need assistance.')">I need assistance.</button>
+                <button onclick="presetSpeak('Thank you!')">Thank you!</button>
+                <button onclick="presetSpeak('Excuse Me please')">Excuse Me please</button><br><br><br>
+                <div>
+                    <button style="align-self: center;background-color: #8fc5ce; " onclick="backMessages()" aria-label="Back">Back</button>
+                </div>
+            </section>
         </section>
 
         <!-- Deaf Users Section -->
@@ -223,6 +225,7 @@
                     <option value="hi-IN">Hindi</option>
                 </select>
                 <button onclick="startSpeechToText()" aria-label="Start speech-to-text">Start Speech-to-Text</button>
+                <button onclick="stopSpeechToText()" aria-label="Stop speech-to-text">Stop Speech-to-Text</button>
                 <p id="speechOutput"></p>
             </div>
         </section>
@@ -252,6 +255,22 @@
         function showTextRecognition() {
             document.getElementById('textRecognitionSection').style.display = 'block';
             document.getElementById('imageRecognitionSection').style.display = 'none';
+        }
+
+        // Show Quick Messages section
+        function showMessages() {
+            document.getElementById('preset-messages').style.display = 'block';
+            document.getElementById('textRecognitionSection').style.display = 'none';
+        }
+
+        function backMessages() {
+            document.getElementById('mute').style.display = 'block';
+            document.getElementById('preset-messages').style.display = 'none';
+        }
+
+        function hideOther() {
+            document.getElementById('imageRecognitionSection').style.display = 'none';
+            document.getElementById('textRecognitionSection').style.display = 'none';
         }
 
         // Analyze Image for Blind Users
@@ -470,23 +489,50 @@ function getRealTimeLocation() {
             window.speechSynthesis.speak(utterance);
         }
 
-        // Start Speech-to-Text for Deaf Users
-        function startSpeechToText() {
-            const language = document.getElementById("languageSelectDeaf").value;
-            const outputElement = document.getElementById("speechOutput");
-            const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
-            recognition.lang = language;
-            recognition.interimResults = false;
-            recognition.start();
-
-            recognition.onresult = (event) => {
-                outputElement.textContent = event.results[0][0].transcript;
-            };
-
-            recognition.onerror = (event) => {
-                outputElement.textContent = `Speech recognition error: ${event.error}`;
-            };
+        function presetSpeak(message) {
+            const speech = new SpeechSynthesisUtterance(message);
+            window.speechSynthesis.speak(speech);
         }
+
+        let recognition; // Declare recognition instance globally
+
+// Start Speech-to-Text for Deaf Users
+function startSpeechToText() {
+    const language = document.getElementById("languageSelectDeaf").value;
+    const outputElement = document.getElementById("speechOutput");
+
+    // Initialize SpeechRecognition only if not already initialized
+    if (!recognition) {
+        recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+        recognition.lang = language;
+        recognition.interimResults = true; // To get intermediate results
+        recognition.continuous = true; // To keep it running continuously
+
+        recognition.onresult = (event) => {
+            const transcript = Array.from(event.results)
+                .map(result => result[0].transcript)
+                .join('');
+            outputElement.textContent = transcript; // Update the output with the transcript
+        };
+
+        recognition.onerror = (event) => {
+            console.error("Speech recognition error:", event.error);
+            outputElement.textContent = `Error: ${event.error}`;
+        };
+    }
+
+    recognition.start(); // Start recognition
+    outputElement.textContent = "Listening for speech...";
+}
+
+// Stop Speech-to-Text
+function stopSpeechToText() {
+    if (recognition) {
+        recognition.stop(); // Stop recognition manually
+        recognition = null; // Reset the recognition instance
+        document.getElementById("speechOutput").textContent = "Speech recognition stopped.";
+    }
+}
 
         // Speak Text for Blind Users
         function speakText(text, language) {
@@ -518,3 +564,4 @@ function getRealTimeLocation() {
 </body>
 
 </html>
+
